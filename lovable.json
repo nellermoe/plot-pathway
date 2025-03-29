@@ -1,9 +1,11 @@
+
 {
-    "name": "storybridge",
-    "type": "web",
-    "buildCommand": "npm run build",
-    "startCommand": "npm start",
-    "env": {
-      "NODE_ENV": "production"
-    }
+  "name": "storybridge",
+  "type": "web",
+  "buildCommand": "npm run build",
+  "startCommand": "npm start",
+  "env": {
+    "NODE_ENV": "production",
+    "VITE_API_URL": "https://your-render-app.onrender.com/api"
   }
+}

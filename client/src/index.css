@@ -1,13 +1,508 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(0, 0, 0, 0.87);
+  background-color: #f6f6f7;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+button:hover {
+  border-color: #646cff;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* App specific styles */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.credit-display {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-radius: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.credit-icon {
+  margin-right: 8px;
+}
+
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  background-color: white;
+  padding: 10px 0;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+.mobile-nav button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: transparent;
+  color: #666;
+  border: none;
+  padding: 8px 0;
+}
+
+.mobile-nav button.active {
+  color: #9b87f5;
+}
+
+.mobile-nav .icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.mobile-nav .label {
+  font-size: 12px;
+}
+
+.desktop-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr 300px;
+  gap: 20px;
+  height: calc(100vh - 150px);
+}
+
+.panel {
+  background-color: white;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  overflow-y: auto;
+}
+
+.story-gallery h2,
+.network-graph h2 {
+  margin-top: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.story-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.story-card {
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.story-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.story-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+
+.story-card h3 {
+  margin: 12px 12px 8px;
+  font-size: 16px;
+}
+
+.story-card p {
+  margin: 0 12px 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.steps-indicator {
+  margin: 0 12px 12px;
+}
+
+.steps-indicator span {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.steps-indicator span.close {
+  color: #4caf50;
+}
+
+.steps-indicator span.medium {
+  color: #ff9800;
+}
+
+.steps-indicator span.far {
+  color: #f44336;
+}
+
+.progress-bar {
+  height: 4px;
+  background-color: #f0f0f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress {
+  height: 100%;
+  background-color: #9b87f5;
+}
+
+.story-viewer {
+  padding: 0 0 20px;
+}
+
+.video-container {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.mock-video {
+  position: relative;
+  width: 100%;
+  background-color: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  background-color: rgba(0,0,0,0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.story-info {
+  margin-bottom: 20px;
+}
+
+.storyteller-info,
+.target-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #9b87f5;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 12px;
+}
+
+.target-avatar {
+  background-color: #4682b4;
+}
+
+.details .name {
+  font-weight: 600;
+}
+
+.details .role {
+  font-size: 14px;
+  color: #666;
+}
+
+.journey-info h3 {
+  margin-bottom: 12px;
+}
+
+.steps-visualization {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.step-node {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #ddd;
+}
+
+.step-node.start {
+  background-color: #9b87f5;
+}
+
+.step-node.end {
+  background-color: #4682b4;
+}
+
+.step-connector {
+  display: flex;
+  align-items: center;
+}
+
+.connector-line {
+  height: 2px;
+  width: 20px;
+  background-color: #ddd;
+}
+
+.distance-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.distance-text .reduced {
+  color: #999;
+  font-style: italic;
+}
+
+.share-button {
+  background-color: #9b87f5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.sharing-progress {
+  margin-top: 20px;
+}
+
+.progress-text {
+  text-align: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.share-success {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.success-message {
+  background-color: #4caf50;
+  color: white;
+  padding: 10px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.success-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.confetti-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.reward-popup {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.reward-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.reward-text {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.reward-credits {
+  color: #4caf50;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.network-graph {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.graph-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin: 0 8px;
+  font-size: 12px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.dot.storyteller {
+  background-color: #ff6347;
+}
+
+.dot.target {
+  background-color: #4682b4;
+}
+
+.dot.path {
+  background-color: #ffa500;
+}
+
+.network-stats {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.app-footer {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  color: #999;
+  font-size: 16px;
+}
+
+.loading-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #9b87f5;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 767px) {
+  .mobile-content {
+    margin-bottom: 70px;
+  }
 }
