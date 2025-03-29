@@ -1,379 +1,219 @@
 
-// src/components/NetworkGraph.jsx
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-import { getPath, getConnections } from '../services/api';
 
 function NetworkGraph({ story }) {
   const svgRef = useRef(null);
-  const [network, setNetwork] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  
+  const [networkData, setNetworkData] = useState(null);
+
   useEffect(() => {
     if (!story) return;
-    
-    const fetchNetworkData = async () => {
-      setLoading(true);
-      try {
-        // Get path between storyteller and target
-        const pathData = await getPath(story.storyteller, story.target);
+
+    // In a real app, this would fetch actual network data from API
+    // For this prototype, we'll generate random data based on the story
+    const generateMockNetworkData = (story) => {
+      const nodes = [];
+      const links = [];
+      
+      // Add storyteller
+      nodes.push({
+        id: "storyteller",
+        name: story.storyteller,
+        role: story.storytellerRole,
+        type: "storyteller"
+      });
+      
+      // Add target
+      nodes.push({
+        id: "target",
+        name: story.target,
+        role: story.targetRole,
+        type: "target"
+      });
+      
+      // Add intermediaries (number based on stepsAway - 1)
+      const intermediaries = story.stepsAway - 1;
+      for (let i = 0; i < intermediaries; i++) {
+        const intermediaryName = `Person ${i+1}`;
+        nodes.push({
+          id: `intermediary-${i}`,
+          name: intermediaryName,
+          role: "Intermediary",
+          type: "path"
+        });
         
-        if (!pathData.success) {
-          throw new Error(pathData.message);
+        // Connect to previous node or storyteller
+        links.push({
+          source: i === 0 ? "storyteller" : `intermediary-${i-1}`,
+          target: `intermediary-${i}`,
+          value: 1
+        });
+        
+        // Connect last intermediary to target
+        if (i === intermediaries - 1) {
+          links.push({
+            source: `intermediary-${i}`,
+            target: "target",
+            value: 1
+          });
         }
-        
-        // Get connections for both storyteller and target to add more nodes
-        const storytellerConnections = await getConnections(story.storyteller);
-        const targetConnections = await getConnections(story.target);
-        
-        // Combine data into a network
-        const combinedNetwork = combineNetworkData(
-          pathData, 
-          storytellerConnections, 
-          targetConnections
-        );
-        
-        setNetwork(combinedNetwork);
-      } catch (err) {
-        setError(err.message);
-        // If API fails, use mock data as fallback
-        setNetwork(generateMockNetwork(story));
-      } finally {
-        setLoading(false);
       }
+      
+      // If no intermediaries, connect directly
+      if (intermediaries === 0) {
+        links.push({
+          source: "storyteller",
+          target: "target",
+          value: 1
+        });
+      }
+      
+      // Add some random connections
+      for (let i = 0; i < 5; i++) {
+        const randomNode1 = nodes[Math.floor(Math.random() * nodes.length)].id;
+        const randomNode2 = nodes[Math.floor(Math.random() * nodes.length)].id;
+        
+        if (randomNode1 !== randomNode2) {
+          links.push({
+            source: randomNode1,
+            target: randomNode2,
+            value: 0.5 // Weaker connection
+          });
+        }
+      }
+      
+      return { nodes, links };
     };
     
-    fetchNetworkData();
+    setNetworkData(generateMockNetworkData(story));
   }, [story]);
   
   useEffect(() => {
-    if (!network || !svgRef.current) return;
+    if (!networkData || !svgRef.current) return;
     
     // Clear previous graph
     d3.select(svgRef.current).selectAll("*").remove();
     
-    // Create force simulation
-    const width = svgRef.current.clientWidth || 500;
-    const height = svgRef.current.clientHeight || 400;
+    const width = 280;
+    const height = 300;
     
-    const simulation = d3.forceSimulation(network.nodes)
-      .force("link", d3.forceLink(network.links).id(d => d.id).distance(80))
-      .force("charge", d3.forceManyBody().strength(-200))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("x", d3.forceX(width / 2).strength(0.1))
-      .force("y", d3.forceY(height / 2).strength(0.1));
+    const svg = d3.select(svgRef.current)
+      .attr("width", width)
+      .attr("height", height);
     
-    // Create SVG elements
-    const svg = d3.select(svgRef.current);
+    // Create a force simulation
+    const simulation = d3.forceSimulation(networkData.nodes)
+      .force("link", d3.forceLink(networkData.links).id(d => d.id).distance(50))
+      .force("charge", d3.forceManyBody().strength(-100))
+      .force("center", d3.forceCenter(width / 2, height / 2));
     
     // Add links
     const link = svg.append("g")
-      .attr("class", "links")
       .selectAll("line")
-      .data(network.links)
-      .join("line")
-      .attr("stroke", d => d.onPath ? "#ffa500" : "#999")
-      .attr("stroke-opacity", d => d.onPath ? 0.8 : 0.3)
-      .attr("stroke-width", d => d.onPath ? 3 : Math.sqrt(d.strength) * 2);
+      .data(networkData.links)
+      .enter().append("line")
+      .attr("stroke", d => d.value === 1 ? "#aaa" : "#ddd")
+      .attr("stroke-width", d => d.value === 1 ? 2 : 1)
+      .attr("stroke-dasharray", d => d.value === 1 ? 0 : 3);
     
-    // Add nodes
+    // Create node groups
     const node = svg.append("g")
-      .attr("class", "nodes")
-      .selectAll("circle")
-      .data(network.nodes)
-      .join("circle")
-      .attr("r", d => {
-        if (d.id === story.storyteller || d.id === story.target) return 10;
-        if (d.onPath) return 7;
-        return 5;
-      })
+      .selectAll(".node")
+      .data(networkData.nodes)
+      .enter().append("g")
+      .attr("class", "node")
+      .call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
+    
+    // Add circles for nodes
+    node.append("circle")
+      .attr("r", 8)
       .attr("fill", d => {
-        if (d.id === story.storyteller) return "#ff6347";
-        if (d.id === story.target) return "#4682b4";
-        if (d.onPath) return "#ffa500";
-        return "#ccc";
-      })
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 1.5)
-      .call(drag(simulation));
+        if (d.type === "storyteller") return "#ff6347";
+        if (d.type === "target") return "#4682b4";
+        return "#ffa500";
+      });
     
-    // Add hover interaction
-    node.append("title")
-      .text(d => `${d.id} (${d.role})\n${d.allegiance}`);
-    
-    // Add labels for important nodes
-    const labels = svg.append("g")
-      .attr("class", "labels")
-      .selectAll("text")
-      .data(network.nodes.filter(d => 
-        d.id === story.storyteller || 
-        d.id === story.target || 
-        d.onPath
-      ))
-      .join("text")
-      .text(d => d.id)
-      .attr("font-size", 10)
+    // Add labels
+    node.append("text")
       .attr("dx", 12)
-      .attr("dy", 4);
+      .attr("dy", ".35em")
+      .text(d => d.name)
+      .style("font-size", "10px")
+      .style("fill", "#333");
     
     // Update positions on tick
     simulation.on("tick", () => {
       link
-        .attr("x1", d => d.source.x)
-        .attr("y1", d => d.source.y)
-        .attr("x2", d => d.target.x)
-        .attr("y2", d => d.target.y);
-      
-      node
-        .attr("cx", d => d.x = Math.max(10, Math.min(width - 10, d.x)))
-        .attr("cy", d => d.y = Math.max(10, Math.min(height - 10, d.y)));
-      
-      labels
-        .attr("x", d => d.x)
-        .attr("y", d => d.y);
+        .attr("x1", d => Math.max(10, Math.min(width - 10, d.source.x)))
+        .attr("y1", d => Math.max(10, Math.min(height - 10, d.source.y)))
+        .attr("x2", d => Math.max(10, Math.min(width - 10, d.target.x)))
+        .attr("y2", d => Math.max(10, Math.min(height - 10, d.target.y)));
+        
+      node.attr("transform", d => `translate(${Math.max(10, Math.min(width - 10, d.x))},${Math.max(10, Math.min(height - 10, d.y))})`);
     });
     
-    // Drag functionality
-    function drag(simulation) {
-      function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        event.subject.fx = event.subject.x;
-        event.subject.fy = event.subject.y;
-      }
-      
-      function dragged(event) {
-        event.subject.fx = event.x;
-        event.subject.fy = event.y;
-      }
-      
-      function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0);
-        event.subject.fx = null;
-        event.subject.fy = null;
-      }
-      
-      return d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended);
+    // Drag functions
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
     }
     
-    // Add zoom functionality
-    const zoom = d3.zoom()
-      .scaleExtent([0.5, 5])
-      .on("zoom", (event) => {
-        svg.selectAll("g").attr("transform", event.transform);
-      });
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
     
-    svg.call(zoom);
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
     
-  }, [network, story]);
+    return () => {
+      simulation.stop();
+    };
+  }, [networkData]);
   
-  // Helper function to combine network data
-  function combineNetworkData(pathData, storytellerConnections, targetConnections) {
-    // Start with path nodes
-    const nodes = [...pathData.nodes];
-    const links = [...pathData.links];
-    const nodeIds = new Set(nodes.map(n => n.id));
-    
-    // Add some connections from storyteller
-    storytellerConnections.slice(0, 5).forEach(conn => {
-      if (!nodeIds.has(conn.name)) {
-        nodes.push({
-          id: conn.name,
-          role: conn.role,
-          allegiance: conn.allegiance,
-          onPath: false
-        });
-        nodeIds.add(conn.name);
-      }
-      
-      links.push({
-        source: story.storyteller,
-        target: conn.name,
-        strength: conn.connectionStrength,
-        onPath: false
-      });
-    });
-    
-    // Add some connections from target
-    targetConnections.slice(0, 5).forEach(conn => {
-      if (!nodeIds.has(conn.name)) {
-        nodes.push({
-          id: conn.name,
-          role: conn.role,
-          allegiance: conn.allegiance,
-          onPath: false
-        });
-        nodeIds.add(conn.name);
-      }
-      
-      links.push({
-        source: story.target,
-        target: conn.name,
-        strength: conn.connectionStrength,
-        onPath: false
-      });
-    });
-    
-    return { nodes, links };
-  }
-  
-  // Fallback mock network generator
-  function generateMockNetwork(story) {
-    if (!story) return { nodes: [], links: [] };
-    
-    // Use some WoT character names
-    const characters = [
-      "Rand al'Thor", "Matrim Cauthon", "Perrin Aybara", "Egwene al'Vere",
-      "Nynaeve al'Meara", "Moiraine Damodred", "Lan Mandragoran", "Thom Merrilin",
-      "Loial", "Min Farshaw", "Elayne Trakand", "Aviendha", "Faile Bashere", 
-      "Siuan Sanche", "Verin Mathwin"
-    ];
-    
-    // Create nodes
-    const nodes = [];
-    
-    // Add storyteller and target
-    nodes.push({ 
-      id: story.storyteller, 
-      role: story.storytellerRole,
-      allegiance: "Unknown",
-      type: 'storyteller', 
-      onPath: true 
-    });
-    
-    nodes.push({ 
-      id: story.target, 
-      role: story.targetRole,
-      allegiance: "Unknown",
-      type: 'target', 
-      onPath: true 
-    });
-    
-    // Add intermediaries based on steps away
-    const pathNodes = [];
-    for (let i = 0; i < story.stepsAway - 1; i++) {
-      const characterIdx = Math.floor(Math.random() * characters.length);
-      pathNodes.push({ 
-        id: characters[characterIdx], 
-        role: 'Intermediary',
-        allegiance: 'Unknown',
-        type: 'intermediary', 
-        onPath: true 
-      });
-      characters.splice(characterIdx, 1);
-    }
-    
-    // Add some extra nodes
-    for (let i = 0; i < 5; i++) {
-      if (characters.length > 0) {
-        const characterIdx = Math.floor(Math.random() * characters.length);
-        nodes.push({ 
-          id: characters[characterIdx], 
-          role: 'Extra',
-          allegiance: 'Unknown',
-          type: 'extra', 
-          onPath: false 
-        });
-        characters.splice(characterIdx, 1);
-      }
-    }
-    
-    // Combine all nodes
-    nodes.push(...pathNodes);
-    
-    // Create links
-    const links = [];
-    
-    // Create the path
-    if (pathNodes.length > 0) {
-      links.push({ 
-        source: story.storyteller, 
-        target: pathNodes[0].id, 
-        strength: 0.8, 
-        onPath: true 
-      });
-      
-      for (let i = 0; i < pathNodes.length - 1; i++) {
-        links.push({ 
-          source: pathNodes[i].id, 
-          target: pathNodes[i + 1].id, 
-          strength: 0.8,
-          onPath: true
-        });
-      }
-      
-      links.push({ 
-        source: pathNodes[pathNodes.length - 1].id, 
-        target: story.target, 
-        strength: 0.8,
-        onPath: true
-      });
-    } else {
-      links.push({ 
-        source: story.storyteller, 
-        target: story.target, 
-        strength: 0.8, 
-        onPath: true 
-      });
-    }
-    
-    // Add some extra connections
-    for (let i = 0; i < 8; i++) {
-      const sourceIdx = Math.floor(Math.random() * nodes.length);
-      let targetIdx = Math.floor(Math.random() * nodes.length);
-      
-      // Avoid self-links
-      while (targetIdx === sourceIdx) {
-        targetIdx = Math.floor(Math.random() * nodes.length);
-      }
-      
-      links.push({
-        source: nodes[sourceIdx].id,
-        target: nodes[targetIdx].id,
-        strength: 0.3 + Math.random() * 0.5,
-        onPath: false
-      });
-    }
-    
-    return { nodes, links };
+  if (!story) {
+    return (
+      <div className="empty-state">
+        <p>Select a story to view network</p>
+      </div>
+    );
   }
   
   return (
     <div className="network-graph">
       <h2>Network Visualization</h2>
-      {!story ? (
-        <div className="empty-state">Select a story to view the network</div>
-      ) : loading ? (
-        <div className="loading">Loading network data...</div>
-      ) : error ? (
-        <div className="error">
-          <p>Error loading network: {error}</p>
-          <p>Using mock data instead</p>
-        </div>
-      ) : (
-        <div className="graph-container">
-          <div className="legend">
-            <div className="legend-item">
-              <span className="dot storyteller"></span> Storyteller
-            </div>
-            <div className="legend-item">
-              <span className="dot target"></span> Target
-            </div>
-            <div className="legend-item">
-              <span className="dot path"></span> Path ({story.stepsAway} steps)
-            </div>
+      
+      <div className="graph-container">
+        <div className="legend">
+          <div className="legend-item">
+            <div className="dot storyteller"></div>
+            <span>Storyteller</span>
           </div>
-          <svg ref={svgRef} width="100%" height="400"></svg>
-          
-          <div className="network-stats">
-            <p>Current distance: <strong>{story.stepsAway} steps</strong></p>
-            <p>Share to reduce by 1 step!</p>
+          <div className="legend-item">
+            <div className="dot target"></div>
+            <span>Target</span>
+          </div>
+          <div className="legend-item">
+            <div className="dot path"></div>
+            <span>Path</span>
           </div>
         </div>
-      )}
+        
+        <svg ref={svgRef}></svg>
+      </div>
+      
+      <div className="network-stats">
+        <p>Current distance: <span className={story.stepsAway <= 2 ? 'close' : story.stepsAway >= 6 ? 'far' : 'medium'}>
+          {story.stepsAway} steps
+        </span></p>
+      </div>
     </div>
   );
 }
