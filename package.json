@@ -9,7 +9,8 @@
       "client": "cd client && npm start",
       "build": "cd client && npm install && npm run build",
       "dev": "concurrently \"npm run server\" \"npm run client\"",
-      "heroku-postbuild": "cd client && npm install && npm run build"
+      "heroku-postbuild": "cd client && npm install && npm run build",
+      "build:dev": "vite build --mode development"
     },
     "dependencies": {
       "concurrently": "^7.0.0"
