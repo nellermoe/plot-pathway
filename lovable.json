@@ -6,6 +6,6 @@
   "startCommand": "npm start",
   "env": {
     "NODE_ENV": "production",
-    "VITE_API_URL": "https://storybridge-backend.onrender.com"
+    "VITE_API_URL": "YOUR_RENDER_BACKEND_URL_HERE"
   }
 }
