@@ -7,5 +7,7 @@
   "env": {
     "NODE_ENV": "production",
     "VITE_API_URL": "https://storybridge-backend.onrender.com"
-  }
+  },
+  "version": "1.0.0",
+  "lovableVersion": "3.0.0"
 }
